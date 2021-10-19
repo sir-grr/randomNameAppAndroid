@@ -11,6 +11,9 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.randomnameapp.databinding.FragmentFirstBinding;
 
+import java.util.Arrays;
+import java.util.Random;
+
 public class FirstFragment extends Fragment {
 
     private FragmentFirstBinding binding;
@@ -32,7 +35,10 @@ public class FirstFragment extends Fragment {
         binding.randomButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                binding.nameTextview.setText("Brian");
+                NameTypeTemplate ntt = new NameTypeTemplate("default", Arrays.asList("Brian","Allan","Samson"));
+                NameMaker nm = new NameMaker();
+                Random rng = new Random();
+                binding.nameTextview.setText(nm.GenerateName(rng));
                 //NavHostFragment.findNavController(FirstFragment.this)
                 //        .navigate(R.id.action_FirstFragment_to_SecondFragment);
             }

@@ -1,6 +1,8 @@
-﻿import java.util.ArrayList;
+﻿package com.example.randomnameapp;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -11,7 +13,7 @@ public class NameTypeTemplate
     public List<NamePart> nameParts;
     public List<Integer> pickGroup;
     public List<NameGrammar> grammars;
-    public Set<RepeatableLetter> repeatableLetters;
+    public Set<String> repeatableLetters;
     public Integer minLength;
     public Integer maxLength;
 
@@ -22,7 +24,7 @@ public class NameTypeTemplate
         pickGroup = new ArrayList<Integer>();
         grammars = new ArrayList<NameGrammar>();
         nameParts = new ArrayList<NamePart>();
-        repeatableLetters = new HashSet<RepeatableLetter>();
+        repeatableLetters = new HashSet<String>();
         minLength = 0;
         maxLength = 0;
 
@@ -32,13 +34,13 @@ public class NameTypeTemplate
     {
 
         //initialise vowels so we can differentiate between vowels and consonants later
-        String[] vowels = { "a","o","e","i","u" };
+        List<String> vowels = Arrays.asList("a","o","e","i","u");
 
         //Ititialising the parts we've been given
         this.identifyingName = modelName;
         this.pickGroup = new ArrayList<Integer>();
         this.nameParts = new ArrayList<NamePart>();
-        this.repeatableLetters = new HashSet<RepeatableLetter>();
+        this.repeatableLetters = new HashSet<String>();
         this.grammars = new ArrayList<NameGrammar>();
 
 
@@ -99,13 +101,13 @@ public class NameTypeTemplate
             for (Integer i = 0; i < name.length() - 1; i++)
             {
                 String ph = name.substring(i, 2);
-                if ((vowels.contains(name.substring(i, 1)) && !(vowels.Contains(name.substring(i + 1, 1)))) || (!(vowels.Contains(name.substring(i, 1))) && vowels.Contains(name.substring(i + 1, 1))))
+                if ((vowels.contains(name.substring(i, 1)) && !(vowels.contains(name.substring(i + 1, 1)))) || (!(vowels.contains(name.substring(i, 1))) && vowels.contains(name.substring(i + 1, 1))))
                 {
                     MakePart(ph,"PH");
                 }
                 if (name.substring(i, 1).equals(name.substring(i + 1, 1)))
                 {
-                    repeatableLetters.Add(new RepeatableLetter() { letter = name.substring(i, 1) });
+                    repeatableLetters.add(name.substring(i, 1));
                 }
 
             }
@@ -114,7 +116,7 @@ public class NameTypeTemplate
             for (Integer i = 0; i < name.length() - 1; i++)
             {
                 String letter = name.substring(i, 1);
-                if (vowels.Contains(letter))
+                if (vowels.contains(letter))
                 {
                     MakePart(letter, "V");
                 }
@@ -131,17 +133,15 @@ public class NameTypeTemplate
         //setting pick counts for the grammars
         MakePicklength();
 
-        //get how many potential names can be made with this model. there is some room for error in this. It ignores that triplets arent allowed and that ph can emulate an vc or cv
-        CalculatePotentialUniques();
     }
     public void MakePicklength()
     {
-        pickGroup = new List<Integer>();
-        foreach (var grammar in this.grammars)
+        pickGroup = new ArrayList<Integer>();
+        for (NameGrammar grammar : this.grammars)
         {
-            for (Integer i = 0; i < grammar.picklength; i++)
+            for (Integer i = 0; i < grammar.pickCount; i++)
             {
-                pickGroup.Add(grammar.id);
+                pickGroup.add(grammar.id);
             }
         }
     }
@@ -154,7 +154,7 @@ public class NameTypeTemplate
         {
             if (partTextIn == this.nameParts.get(c).partText && partTypeIn == this.nameParts.get(c).partType)
             {
-                this.nameParts.get(c).picklength++;
+                this.nameParts.get(c).pickCount++;
                 partIsNew = false;
             }
             else if (partTextIn == this.nameParts.get(c).partText)
@@ -164,30 +164,29 @@ public class NameTypeTemplate
         }
         if (partIsNew)
         {
-            nameParts.Add(new NamePart() { picklength = 1, partText = partTextIn, partType = partTypeIn });
+            nameParts.add(new NamePart(partTextIn,partTypeIn,1));
         }
     }
     public void MakeGrammars(List<String> names)
     {
         //here we will build an algorithm for creating grammars.
-        List<String> usedGrammarsInStringForm = new List<String>();
+        List<String> usedGrammarsInStringForm = new ArrayList<String>();
         for(String name : names)
         {
-            usedGrammarsInStringForm = MakeStringListGrammarsForName(name, new List<String>(), usedGrammarsInStringForm);
+            usedGrammarsInStringForm = MakeStringListGrammarsForName(name, new ArrayList<String>(), usedGrammarsInStringForm);
         }
 
     }
 
     public List<String> MakeStringListGrammarsForName(String unAnalysedPartOfName, List<String> currentGrammar, List<String> listOfGrammarsAsStrings)
     {
-        Utility ut = new Utility();
         //loop for the size of the String
         for (Integer i = 0; i < unAnalysedPartOfName.length(); i++)
         {
             //if the part is at the start of the unAnalysed portion of the name
-            bool isAPart = false;
+            boolean isAPart = false;
             NamePart np = new NamePart();
-            for (Integer j = 0; j < nameParts.length(); j++)
+            for (Integer j = 0; j < nameParts.size(); j++)
             {
                if(nameParts.get(j).partText == unAnalysedPartOfName.substring(0, (unAnalysedPartOfName.length() - i)))
                {
@@ -198,22 +197,24 @@ public class NameTypeTemplate
             if (isAPart)
             {
                 //make a version of the grammar with this part type added to it
-                List<String> grammarWithPart = currentGrammar.Concat(new List<String>() { np.partType }).ToList();
+                currentGrammar.addAll(Arrays.asList(np.partType));
+                List<String> grammarWithPart = currentGrammar;
 
                 //if this isnt the end of the name
                 if (!((unAnalysedPartOfName.length() - (unAnalysedPartOfName.length() - i)) == 0))
                 {
-                    //go down anoother level and pass through the part of the name you havent analysed and the state the grammar should be in
-                    MakeStringListGrammarsForName(unAnalysedPartOfName.Remove(0, (unAnalysedPartOfName.length() - i)), grammarWithPart, listOfGrammarsAsStrings);
+                    //go down another level and pass through the part of the name you havent analysed and the state the grammar should be in
+                    unAnalysedPartOfName = unAnalysedPartOfName.substring(unAnalysedPartOfName.length() - i);
+                    MakeStringListGrammarsForName(unAnalysedPartOfName, grammarWithPart, listOfGrammarsAsStrings);
                 }
                 else // if it is the end of the name
                 {
                     //this part checks if the grammar avoids unwanted triplets
                     //default that it does
-                    bool avoidsUnwantedTriples = true;
-                    if (grammarWithPart.length() >= 3)
+                    boolean avoidsUnwantedTriples = true;
+                    if (grammarWithPart.size() >= 3)
                     {
-                        Integer lastIndex = grammarWithPart.length() - 1;
+                        Integer lastIndex = grammarWithPart.size() - 1;
                         //checks if this grammar fails to avoid unwanted triple consonants
                         avoidsUnwantedTriples = ((grammarWithPart.get(lastIndex - 2).equals("C") || grammarWithPart.get(lastIndex - 2).equals("START") || grammarWithPart.get(lastIndex - 2).equals("PH")) &&
                             grammarWithPart.get(lastIndex - 1).equals("C") && grammarWithPart.get(lastIndex).equals("C"))
@@ -231,23 +232,19 @@ public class NameTypeTemplate
                     if (avoidsUnwantedTriples)
                     {
                         //if the grammar has already been added
-                        if (listOfGrammarsAsStrings.Contains(ut.StringListToString(grammarWithPart)))
+                        if (listOfGrammarsAsStrings.contains(grammarWithPart.toString()))
                         {
                             //up its pick count
-                            grammars.Where(gram => ut.StringListToString(gram.instructions.Select(ins => ins.instructionText).ToList()) == ut.StringListToString(grammarWithPart)).First().picklength++;
+                            grammars.get(grammars.indexOf(grammarWithPart)).pickCount++;
                         }
-                        //checks to see if the structure generated is a valid grammar and saves it to a bool,
+                        //checks to see if the structure generated is a valid grammar and saves it to a boolean,
                         //this includes checking the grammar begins with a start and ends in an end or is made of few enough parts then checks of it starts correctly or ends correctly.
-                        else if (((grammarWithPart.First().equals("START") && grammarWithPart.Last().equals("END")) || (grammarWithPart.length() <= 2) && ((grammarWithPart.First().equals("START") || grammarWithPart.Last().equals("END")))))
+                        else if (((grammarWithPart.get(0).equals("START") && grammarWithPart.get(-1).equals("END")) || (grammarWithPart.size() <= 2) && ((grammarWithPart.get(0).equals("START") || grammarWithPart.get(-1).equals("END")))))
                         {
                             //add it to your grammar checklist
-                            listOfGrammarsAsStrings.Add(ut.StringListToString(grammarWithPart));
+                            listOfGrammarsAsStrings.add(grammarWithPart.toString());
                             //add it to the models grammars
-                            this.grammars.Add(new NameGrammar()
-                            {
-                                instructions = ut.StringGrammarToInstructionGrammar(grammarWithPart),
-                                picklength = 1,
-                            });
+                            this.grammars.add(new NameGrammar(grammarWithPart,1));
                         }
                     }
                 }
