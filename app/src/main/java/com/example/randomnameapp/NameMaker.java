@@ -1,4 +1,4 @@
-﻿package com.example.randomnameapp;
+package com.example.randomnameapp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,70 +26,27 @@ public class NameMaker
         List<String> vowels = Arrays.asList("e", "a", "i", "o", "u");
         String name = "";
         //var textAvailable = new List<String>();
-        NameTypeTemplate typeModel = nameTypeTemplate;
-        int randomPick = typeModel.pickGroup.get(rng.nextInt(typeModel.pickGroup.size()));
-        NameGrammar pick = new NameGrammar();
-        for(NameGrammar grammar : typeModel.grammars){
-            if(grammar.id == randomPick){
-                pick = grammar;
-                break;
-            }
-        }
-        List<String> model = pick.instructions;
+        List<String> pick = nameTypeTemplate.grammars.get(rng.nextInt(nameTypeTemplate.grammars.size()));
+        List<String> model = pick;
+        System.out.println("using grammar " + pick);
         for (int i = 0; i < model.size(); i++)
         {
             List<String> textAvailable = new ArrayList<String>();
-            for(NamePart namePart : typeModel.nameParts){
+            for(NamePart namePart : nameTypeTemplate.nameParts){
                 if(namePart.partType == model.get(i)){
                     textAvailable.add(namePart.partText);
                 }
             }
             String textToBeInput = textAvailable.get(rng.nextInt(textAvailable.size()));
-
-            if (i != 0)
-            {
-                //checks if there is two of the same letter in a row and if so deletes one if the letter isnt alowed to repeat
-                boolean duplicateFixed = false;
-                do
-                {
-                    if (!textToBeInput.equals(""))
-                    {
-                        duplicateFixed = !(textToBeInput.substring(0, 1).equals(name.substring(name.length() - 1, 1)) && !(typeModel.repeatableLetters.contains(textToBeInput.substring(0, 1))));
-                        if (!duplicateFixed)
-                        {
-                            textToBeInput = textToBeInput.substring(1, textToBeInput.length() - 1);
-                        }
-                    }
-                    else
-                    {
-                        duplicateFixed = true;
-                    }
-                } while (!duplicateFixed);
-
-            }
             name = name + textToBeInput;
-            if (name.length() > 2)
-            {
-                for (int j = 0; j < name.length() - 2; j++)
-                {
-                    //if there is a triplet
-                    if ((vowels.contains(name.substring(j, 1)) && vowels.contains(name.substring(j + 1, 1)) && vowels.contains(name.substring(j + 2, 1))) ||
-                        (!(vowels.contains(name.substring(j, 1))) && !(vowels.contains(name.substring(j + 1, 1))) && !(vowels.contains(name.substring(j + 2, 1)))))
-                    {
-                        //remove the third letter of it
-                        name = name.substring(j + 2, 1);
-                        //dont move forward an increment
-                        j--;
-                    }
-                }
-            }
+
         }
 
-        if (name.length() < typeModel.minLength)
+        if (name.length() < nameTypeTemplate.minLength)
         {
             return GenerateName(rng);
         }
-        else if (name.length() > typeModel.maxLength)
+        else if (name.length() > nameTypeTemplate.maxLength)
         {
             return GenerateName(rng);
         }
@@ -118,7 +75,31 @@ public class NameMaker
 
     public String Capatalise(String word)
     {
-        return (word.substring(0, 1).toUpperCase(Locale.ROOT) + word.substring(1, word.length() - 1).toLowerCase(Locale.ROOT));
+        return (word.substring(0, 1).toUpperCase(Locale.ROOT) + word.substring(1).toLowerCase(Locale.ROOT));
     }
 }
+/*
+            if (name.length() > 2)
+            {
+                for(int j = 0; j < name.length() - 1; j++){
+                    boolean duplicateFixed = false;
+                    duplicateFixed = !(textToBeInput.substring(j, j+1).equals(name.substring(j+1, j+2)) && !(nameTypeTemplate.repeatableLetters.contains(textToBeInput.substring(j, j+1))));
+                    if (!duplicateFixed) {
+                        textToBeInput = textToBeInput.replaceFirst(textToBeInput.substring(j, j+1),"");
+                    }
+                }
+                for (int j = 0; j < name.length() - 2; j++)
+                {
+                    //if there is a triplet
+                    if ((vowels.contains(name.substring(j, j+1)) && vowels.contains(name.substring(j + 1, j+2)) && vowels.contains(name.substring(j + 2, j+3))) ||
+                        (!(vowels.contains(name.substring(j, j+1))) && !(vowels.contains(name.substring(j + 1, j+2))) && !(vowels.contains(name.substring(j + 2, j+3)))))
+                    {
+                        //remove the third letter of it
+                        name = name.replaceFirst(name.substring(j, j+1),"");
+                        //dont move forward an increment
+                        j--;
+                    }
+                }
+            }
+ */
 

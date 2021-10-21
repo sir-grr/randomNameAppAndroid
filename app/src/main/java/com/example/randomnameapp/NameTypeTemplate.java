@@ -1,9 +1,10 @@
-﻿package com.example.randomnameapp;
+package com.example.randomnameapp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public class NameTypeTemplate
@@ -11,8 +12,7 @@ public class NameTypeTemplate
     public Integer id;
     public String identifyingName;
     public List<NamePart> nameParts;
-    public List<Integer> pickGroup;
-    public List<NameGrammar> grammars;
+    public List<List<String>> grammars;
     public Set<String> repeatableLetters;
     public Integer minLength;
     public Integer maxLength;
@@ -21,8 +21,7 @@ public class NameTypeTemplate
     public NameTypeTemplate()
     {
         identifyingName = "";
-        pickGroup = new ArrayList<Integer>();
-        grammars = new ArrayList<NameGrammar>();
+        grammars = new ArrayList<List<String>>();
         nameParts = new ArrayList<NamePart>();
         repeatableLetters = new HashSet<String>();
         minLength = 0;
@@ -32,16 +31,19 @@ public class NameTypeTemplate
 
     public NameTypeTemplate(String modelName, List<String> names)
     {
-
         //initialise vowels so we can differentiate between vowels and consonants later
         List<String> vowels = Arrays.asList("a","o","e","i","u");
 
         //Ititialising the parts we've been given
         this.identifyingName = modelName;
-        this.pickGroup = new ArrayList<Integer>();
         this.nameParts = new ArrayList<NamePart>();
         this.repeatableLetters = new HashSet<String>();
-        this.grammars = new ArrayList<NameGrammar>();
+        this.grammars = new ArrayList<List<String>>();
+
+        //setting all the names to lower case
+        for(String name : names){
+            names.set(names.indexOf(name),name.toLowerCase(Locale.ROOT));
+        }
 
 
         //using the names we've added
@@ -63,6 +65,7 @@ public class NameTypeTemplate
                 this.minLength = name.length();
             }
         }
+        System.out.println("Length Segment Complete Max: " + this.maxLength + " Min: " + this.minLength);
 
         //looping for all the names
         for(String name : names)
@@ -78,6 +81,7 @@ public class NameTypeTemplate
 
             }
         }
+        System.out.println("Start parts retrieved");
 
 
 
@@ -89,33 +93,36 @@ public class NameTypeTemplate
             {
                 if (l <= name.length())
                 {
-                    String end = name.substring(- l);
+                    String end = name.substring(name.length() - l,name.length());
                     MakePart(end, "END");
                 }
             }
         }
+        System.out.println("End parts retrieved");
+
         //looping for all the names
         for(String name : names)
         {
             //getting ph sounds and repeatables
             for (Integer i = 0; i < name.length() - 1; i++)
             {
-                String ph = name.substring(i, 2);
-                if ((vowels.contains(name.substring(i, 1)) && !(vowels.contains(name.substring(i + 1, 1)))) || (!(vowels.contains(name.substring(i, 1))) && vowels.contains(name.substring(i + 1, 1))))
+                String ph = name.substring(i, i+2);
+                if ((vowels.contains(name.substring(i, i+1)) && !(vowels.contains(name.substring(i + 1, i+2)))) || (!(vowels.contains(name.substring(i, i+1))) && vowels.contains(name.substring(i + 1, i+2))))
                 {
                     MakePart(ph,"PH");
                 }
-                if (name.substring(i, 1).equals(name.substring(i + 1, 1)))
+                else if (name.substring(i, i+1).equals(name.substring(i + 1, i+2)))
                 {
-                    repeatableLetters.add(name.substring(i, 1));
+                    repeatableLetters.add(name.substring(i, i+1));
                 }
 
             }
+            System.out.println("PH parts retrieved");
 
             //getting c and v values
-            for (Integer i = 0; i < name.length() - 1; i++)
+            for (Integer i = 0; i < name.length(); i++)
             {
-                String letter = name.substring(i, 1);
+                String letter = name.substring(i, i+1);
                 if (vowels.contains(letter))
                 {
                     MakePart(letter, "V");
@@ -125,39 +132,29 @@ public class NameTypeTemplate
                     MakePart(letter, "C");
                 }
             }
+            System.out.println("Vs and Cs retrieved");
         }
 
+        System.out.println("Parts Added");
+        for (NamePart part : nameParts){
+            System.out.println("Type: " + part.partType + " Text: " + part.partText);
+        }
         //automatically generating grammars off the names we will pass in
         MakeGrammars(names);
-
-        //setting pick counts for the grammars
-        MakePicklength();
-
-    }
-    public void MakePicklength()
-    {
-        pickGroup = new ArrayList<Integer>();
-        for (NameGrammar grammar : this.grammars)
-        {
-            for (Integer i = 0; i < grammar.pickCount; i++)
-            {
-                pickGroup.add(grammar.id);
-            }
+        System.out.println("Grammars generated");
+        for(List<String> ng : grammars){
+            System.out.println(ng);
         }
     }
-    //this adds a part to the part list if it meets cetain conditions
+
+    //this adds a part to the part list if it meets certain conditions
     public void MakePart(String partTextIn, String partTypeIn)
     {
         boolean partIsNew = true;
         //this loop checks the part doesnt already exist and if it does and is of the correct type we up its pick count
         for (Integer c = 0; c < this.nameParts.size(); c++)
         {
-            if (partTextIn == this.nameParts.get(c).partText && partTypeIn == this.nameParts.get(c).partType)
-            {
-                this.nameParts.get(c).pickCount++;
-                partIsNew = false;
-            }
-            else if (partTextIn == this.nameParts.get(c).partText)
+            if (partTextIn.equals(this.nameParts.get(c).partText))
             {
                 partIsNew = false;
             }
@@ -165,96 +162,87 @@ public class NameTypeTemplate
         if (partIsNew)
         {
             nameParts.add(new NamePart(partTextIn,partTypeIn,1));
+            System.out.println("adding part Type: " + partTypeIn + " Text: " + partTextIn );
         }
     }
     public void MakeGrammars(List<String> names)
     {
-        //here we will build an algorithm for creating grammars.
-        List<String> usedGrammarsInStringForm = new ArrayList<String>();
+
         for(String name : names)
         {
-            usedGrammarsInStringForm = MakeStringListGrammarsForName(name, new ArrayList<String>(), usedGrammarsInStringForm);
+            MakeGrammarsForName(name, new ArrayList<String>());
         }
 
     }
 
-    public List<String> MakeStringListGrammarsForName(String unAnalysedPartOfName, List<String> currentGrammar, List<String> listOfGrammarsAsStrings)
+    public void MakeGrammarsForName(String unAnalysedPartOfName, List<String> currentGrammar)
     {
-        //loop for the size of the String
-        for (Integer i = 0; i < unAnalysedPartOfName.length(); i++)
+        System.out.println("Make grammars for name running");
+        //find whats shorter the length or four
+        int maxPartLength = unAnalysedPartOfName.length();
+        if(unAnalysedPartOfName.length() > 3){
+            maxPartLength = 3;
+        }
+        //loop for the start of the name
+        for (Integer i = 1; i <= maxPartLength; i++)
         {
-            //if the part is at the start of the unAnalysed portion of the name
-            boolean isAPart = false;
+            //System.out.println("loop " + i);
             NamePart np = new NamePart();
             for (Integer j = 0; j < nameParts.size(); j++)
             {
-               if(nameParts.get(j).partText == unAnalysedPartOfName.substring(0, (unAnalysedPartOfName.length() - i)))
+               if(nameParts.get(j).partText.equals(unAnalysedPartOfName.substring(0, i)))
                {
-                    isAPart = true;
                     np = nameParts.get(j);
+                    //System.out.println("Should match "+ nameParts.get(j).partText + " = " + unAnalysedPartOfName.substring(0, i));
+                    String passDownUnAnalysedPartOfName = unAnalysedPartOfName.substring(i);
+                    List<String> newGrammar = new ArrayList<>();
+                    newGrammar.addAll(currentGrammar);
+                    newGrammar.add(np.partType);
+                    if(passDownUnAnalysedPartOfName.length()>0){
+                        //System.out.println("should continue with " + passDownUnAnalysedPartOfName);
+                        MakeGrammarsForName(passDownUnAnalysedPartOfName, newGrammar);
+                    }
+                    else if(!(grammars.contains(newGrammar))){
+                        //System.out.println("should make a grammar");
+                        this.grammars.add(newGrammar);
+                    }
                }
             }
-            if (isAPart)
-            {
-                //make a version of the grammar with this part type added to it
-                currentGrammar.addAll(Arrays.asList(np.partType));
-                List<String> grammarWithPart = currentGrammar;
 
-                //if this isnt the end of the name
-                if (!((unAnalysedPartOfName.length() - (unAnalysedPartOfName.length() - i)) == 0))
-                {
-                    //go down another level and pass through the part of the name you havent analysed and the state the grammar should be in
-                    unAnalysedPartOfName = unAnalysedPartOfName.substring(unAnalysedPartOfName.length() - i);
-                    MakeStringListGrammarsForName(unAnalysedPartOfName, grammarWithPart, listOfGrammarsAsStrings);
-                }
-                else // if it is the end of the name
-                {
-                    //this part checks if the grammar avoids unwanted triplets
-                    //default that it does
-                    boolean avoidsUnwantedTriples = true;
-                    if (grammarWithPart.size() >= 3)
-                    {
-                        Integer lastIndex = grammarWithPart.size() - 1;
-                        //checks if this grammar fails to avoid unwanted triple consonants
-                        avoidsUnwantedTriples = ((grammarWithPart.get(lastIndex - 2).equals("C") || grammarWithPart.get(lastIndex - 2).equals("START") || grammarWithPart.get(lastIndex - 2).equals("PH")) &&
-                            grammarWithPart.get(lastIndex - 1).equals("C") && grammarWithPart.get(lastIndex).equals("C"))
-                        || (grammarWithPart.get(lastIndex - 2).equals("C") && grammarWithPart.get(lastIndex - 1).equals("C") &&
-                            (grammarWithPart.get(lastIndex).equals("C") || grammarWithPart.get(lastIndex).equals("END") || grammarWithPart.get(lastIndex).equals("PH")))
-                        //checks if this grammar fails to avoid unwanted triple vowels
-                        || ((grammarWithPart.get(lastIndex - 2).equals("V") || grammarWithPart.get(lastIndex - 2).equals("START") || grammarWithPart.get(lastIndex - 2).equals("PH")) &&
-                            grammarWithPart.get(lastIndex - 1).equals("V") && grammarWithPart.get(lastIndex).equals("V"))
-                        || (grammarWithPart.get(lastIndex - 2).equals("V") && grammarWithPart.get(lastIndex - 1).equals("V") &&
-                            (grammarWithPart.get(lastIndex).equals("V") || grammarWithPart.get(lastIndex).equals("END") || grammarWithPart.get(lastIndex).equals("PH")));
-                        //inverse the result to find if it succeeds in avoiding triplets
-                        avoidsUnwantedTriples = !avoidsUnwantedTriples;
-                    }
-                    //if the grammar does try and avoid unwanted triplets
-                    if (avoidsUnwantedTriples)
-                    {
-                        //if the grammar has already been added
-                        if (listOfGrammarsAsStrings.contains(grammarWithPart.toString()))
-                        {
-                            //up its pick count
-                            grammars.get(grammars.indexOf(grammarWithPart)).pickCount++;
-                        }
-                        //checks to see if the structure generated is a valid grammar and saves it to a boolean,
-                        //this includes checking the grammar begins with a start and ends in an end or is made of few enough parts then checks of it starts correctly or ends correctly.
-                        else if (((grammarWithPart.get(0).equals("START") && grammarWithPart.get(-1).equals("END")) || (grammarWithPart.size() <= 2) && ((grammarWithPart.get(0).equals("START") || grammarWithPart.get(-1).equals("END")))))
-                        {
-                            //add it to your grammar checklist
-                            listOfGrammarsAsStrings.add(grammarWithPart.toString());
-                            //add it to the models grammars
-                            this.grammars.add(new NameGrammar(grammarWithPart,1));
-                        }
-                    }
-                }
-            }
         }
-        return listOfGrammarsAsStrings;
     }
 
 
+/*if (isAPart)
+            {
+                //make a version of the grammar with this part type added to it
+                List<String> grammarWithPart = currentGrammar;
+                grammarWithPart.add(np.partType);
+                //System.out.println("Grammar with part" + grammarWithPart);
 
+                //if this isnt the end of the name
+                if (!((unAnalysedPartOfName.length() - i) == 0))
+                {
+                    System.out.println("more than 0 Letters remaining in " + unAnalysedPartOfName);
+                    //go down another level and pass through the part of the name you havent analysed and the state the grammar should be in
+                    String passDownUnAnalysedPartOfName = unAnalysedPartOfName.substring(i);
+                    System.out.println("Passing Down " + passDownUnAnalysedPartOfName);
+                    MakeGrammarsForName(passDownUnAnalysedPartOfName, grammarWithPart);
+                }
+                else // if it is the end of the name
+                {
+                    System.out.println("all letters used");
+                    //checks to see if the structure generated is a valid grammar and saves it to a boolean,
+                    //this includes checking the grammar begins with a start and ends in an end or is made of few enough parts then checks of it starts correctly or ends correctly.
+                    if (((grammarWithPart.get(0).equals("START") && grammarWithPart.get(-1).equals("END")) || (grammarWithPart.size() <= 2) && ((grammarWithPart.get(0).equals("START") || grammarWithPart.get(-1).equals("END")))))
+                    {
+                        System.out.println("valid and creating grammar");
+                        System.out.println("Grammar with part" + grammarWithPart);
+                        //add it to the models grammars
+                        this.grammars.add(new NameGrammar(grammarWithPart));
+                    }
+                }
+            }*/
 
 }
 

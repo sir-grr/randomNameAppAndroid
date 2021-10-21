@@ -1,4 +1,4 @@
-﻿package com.example.randomnameapp;
+package com.example.randomnameapp;
 
 public class NamePart
 {
@@ -7,7 +7,7 @@ public class NamePart
     public String partText;
     public int pickCount;
 
-    public NamePart(String partType,String partText, int pickCount){
+    public NamePart(String partText,String partType, int pickCount){
         this.partText = partText;
         this.partType = partType;
         this.pickCount = pickCount;
