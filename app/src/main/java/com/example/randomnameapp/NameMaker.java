@@ -78,28 +78,3 @@ public class NameMaker
         return (word.substring(0, 1).toUpperCase(Locale.ROOT) + word.substring(1).toLowerCase(Locale.ROOT));
     }
 }
-/*
-            if (name.length() > 2)
-            {
-                for(int j = 0; j < name.length() - 1; j++){
-                    boolean duplicateFixed = false;
-                    duplicateFixed = !(textToBeInput.substring(j, j+1).equals(name.substring(j+1, j+2)) && !(nameTypeTemplate.repeatableLetters.contains(textToBeInput.substring(j, j+1))));
-                    if (!duplicateFixed) {
-                        textToBeInput = textToBeInput.replaceFirst(textToBeInput.substring(j, j+1),"");
-                    }
-                }
-                for (int j = 0; j < name.length() - 2; j++)
-                {
-                    //if there is a triplet
-                    if ((vowels.contains(name.substring(j, j+1)) && vowels.contains(name.substring(j + 1, j+2)) && vowels.contains(name.substring(j + 2, j+3))) ||
-                        (!(vowels.contains(name.substring(j, j+1))) && !(vowels.contains(name.substring(j + 1, j+2))) && !(vowels.contains(name.substring(j + 2, j+3)))))
-                    {
-                        //remove the third letter of it
-                        name = name.replaceFirst(name.substring(j, j+1),"");
-                        //dont move forward an increment
-                        j--;
-                    }
-                }
-            }
- */
-
